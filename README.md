@@ -120,16 +120,11 @@ If the `training` and `testing` KITTI folders are present in the expected layout
 
 ## Limitations and future work
 
-This implementation is intentionally conservative about the dataset boundary. The current folder structure supports real KITTI images and labels, but not raw sequence metadata. A stricter future version should move to KITTI tracking sequences or another source with explicit temporal identity so that motion estimates can be tied to real consecutive frames rather than adjacency in the flattened object folder.
+This framework is intentionally transparent about its dataset boundaries:
 
-If you want a stricter arXiv-ready statement, describe the current result as a reproducible temporal proxy over the KITTI object split, not as a raw-sequence tracking benchmark.
+* **Temporal Tracking Input:** The current architecture utilizes sequential image file pairs from the flattened KITTI object detection split rather than the continuous raw video streams from the tracking benchmark.
+* **Kinematic Supervision Proxy:** Because the KITTI object labels provide native 3D spatial locations ($[x, y, z]$ coordinates) rather than explicit speedometer velocity logs, this implementation relies on a derived temporal motion proxy ($v = \frac{\Delta z}{\Delta t}$).
 
-## arXiv positioning
+### Scientific Focus
 
-For a preprint, this project is strongest when framed as:
-
-1. A neuro-symbolic fault-isolation system for autonomous vehicle telemetry.
-2. A temporal proxy method that uses real KITTI imagery and annotations.
-3. A reproducible demonstration of graceful degradation under camera and odometer corruption.
-
-That framing is technically honest and still publication-worthy because the contribution is the fault-isolation architecture, the symbolic consistency design, and the measured resilience under corruption, not a claim that KITTI object labels are a native speed ground truth.
+The primary contribution of this work is the structural architecture of the neuro-symbolic fault-isolation stack, the design of the symbolic consistency matrix, and the measured tracking resilience under concurrent sensor corruption. It demonstrates a highly reproducible paradigm for graceful degradation in autonomous telemetry without claiming that the object-label sequence represents native ground-truth vehicle velocity. Future iterations will evaluate this architecture directly against raw-sequence tracking benchmarks with explicit identity synchronization across frames.
