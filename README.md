@@ -6,6 +6,8 @@ The repository was derived from the executed notebook [av_fault_isolation.ipynb]
 
 ## Architecture At A Glance
 
+![KITTI Fault Isolation Metrics](kitti_realworld_fault_isolation.png)
+
 ```mermaid
 flowchart LR
     A[KITTI training/image_2] --> B[Temporal pair loader\nI_t and I_t+1]
@@ -70,13 +72,11 @@ That means the project is best described honestly as a temporal proxy built from
 
 These values come from the notebook run in this workspace after refactoring to a paired-frame 6-channel input:
 
-![Validation chart](kitti_realworld_fault_isolation.png)
-
 | Operational Environment Mode | Safe Tracking Accuracy |
 | :--- | :---: |
-| Nominal Clear Highway | 99.33% |
-| Blinded Dashboard Camera (Mud Occlusion) | 98.93% |
-| Blinded Dashboard Camera + Broken Odometer | 98.60% |
+| **Nominal Clear Highway** | 99.33% |
+| **Blinded Dashboard Camera (Mud Occlusion)** | 98.93% |
+| **Blinded Dashboard Camera + Broken Odometer** | 98.60% |
 
 Training integrity reported by the notebook after refactoring:
 
