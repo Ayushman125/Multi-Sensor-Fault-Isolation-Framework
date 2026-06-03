@@ -12,45 +12,56 @@ The isolator evaluates deterministic logical rules over indices of $\mathbf{M}$ 
 \subsection{Architecture schematic}
 Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor; deterministic masks $\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
 
-\begin{figure}[!t]
-	\centering
-	\resizebox{0.98\linewidth}{!}{%
-	\begin{tikzpicture}[
-		font=\small,
-		>=Latex,
-		node distance=10mm and 14mm,
-		every node/.style={align=center},
-		base/.style={draw, thick, rounded corners=4pt, minimum height=1.0cm, text width=3.0cm, inner sep=5pt},
-		sensor/.style={base, fill=gray!10, draw=gray!55!black},
-		neural/.style={base, fill=blue!8, draw=blue!55!black, text width=3.4cm},
-		symbolic/.style={base, fill=orange!10, draw=orange!65!black, text width=3.5cm},
-		output/.style={base, fill=green!10, draw=green!50!black, text width=2.7cm},
-		arrow/.style={->, thick, draw=gray!70!black}
-	]
-		\node[sensor] (frames) {6-channel temporal stack\\$[I_t, I_{t+1}]$};
-		\node[sensor, below=of frames] (speed) {Speed prior\\$\mathbf{p}_{\text{speed}}$};
-		\node[sensor, below=of speed] (odo) {Odometer\\$\mathbf{p}_{\text{odo}}$};
+\begin{figure*}[!t]
+    \centering
+    \resizebox{0.96\linewidth}{!}{%
+    \begin{tikzpicture}[
+        font=\small,
+        >=Latex,
+        node distance=0.6cm and 1.2cm,
+        every node/.style={align=center},
+        base/.style={draw, thick, rounded corners=4pt, minimum height=1.1cm, text width=2.8cm, inner sep=5pt, fill=white},
+        sensor/.style={base, fill=gray!8, draw=gray!55!black},
+        neural/.style={base, fill=blue!6, draw=blue!55!black, text width=3.2cm},
+        symbolic/.style={base, fill=orange!6, draw=orange!65!black, text width=3.4cm},
+        output/.style={base, fill=green!6, draw=green!50!black, text width=2.4cm},
+        arrow/.style={->, thick, draw=gray!70!black}
+    ]
+        % --- STAGE 1: VISUALLY BALANCED SENSOR COLUMN ---
+        \node[sensor] (frames) {6-channel temporal stack\\$[I_t, I_{t+1}]$};
+        \node[sensor, below=of frames] (speed) {Speed prior\\$\mathbf{p}_{\text{speed}}$};
+        \node[sensor, below=of speed] (odo) {Odometer\\$\mathbf{p}_{\text{odo}}$};
 
-		\node[neural, right=of frames] (cnn) {Perception CNN\\$\mathcal{P}_\theta$\\$\mathbf{p}_{\text{cam}} \in \Delta^{K-1}$};
-		\node[symbolic, right=of cnn] (outer) {Tensor outer product\\$\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\,\mathbf{p}_{\text{odo},j}\,\mathbf{p}_{\text{speed},k}$};
-		\node[symbolic, right=of outer] (mask) {Symbolic mask ($\Phi$)\\Kinematic rules};
-		\node[output, right=of mask] (posterior) {Posterior\\$\mathbf{P}(V=m)$};
+        % --- STAGE 2: SYSTEM 1 PERCEPTION ---
+        \node[neural, right=of frames] (cnn) {Perception CNN\\$\mathcal{P}_\theta$\\$\mathbf{p}_{\text{cam}} \in \Delta^{K-1}$};
 
-		\begin{scope}[on background layer]
-			\node[draw=blue!40, dashed, rounded corners=6pt, fill=blue!4, inner sep=10pt, fit=(frames) (cnn), label={[blue!70!black]above:\textbf{System 1: Neural perception}}] {};
-			\node[draw=orange!40, dashed, rounded corners=6pt, fill=orange!4, inner sep=10pt, fit=(outer) (mask), label={[orange!70!black]above:\textbf{System 2: Symbolic constraints}}] {};
-		\end{scope}
+        % --- STAGE 3: SYSTEM 2 TENSOR FUSION (Symmetrically Positioned at Center-Stream Height) ---
+        \node[symbolic, right=1.6cm of cnn.south east, yshift=-0.55cm, anchor=west] (outer) {
+            Tensor outer product\\
+            $\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\,\mathbf{p}_{\text{odo},j}\,\mathbf{p}_{\text{speed},k}$
+        };
+        \node[symbolic, right=of outer] (mask) {Symbolic mask ($\Phi$)\\Kinematic rules};
+        
+        % --- STAGE 4: EVALUATED POSTERIOR OUTPUT ---
+        \node[output, right=of mask] (posterior) {Posterior\\$\mathbf{P}(V=m)$};
 
-		\draw[arrow] (frames) -- (cnn);
-		\draw[arrow] (speed.east) -- node[above, font=\scriptsize] {$\mathbf{p}_{\text{speed}}$} ($(outer.west)+(0,0.25)$);
-		\draw[arrow] (odo.east) -- node[below, font=\scriptsize] {$\mathbf{p}_{\text{odo}}$} ($(outer.west)+(0,-0.25)$);
-		\draw[arrow] (cnn) -- node[above, font=\scriptsize] {$\mathbf{p}_{\text{cam}}$} (outer);
-		\draw[arrow] (outer) -- node[above, font=\scriptsize] {$\mathbb{R}^{K \times K \times K}$} (mask);
-		\draw[arrow] (mask) -- node[above, font=\scriptsize] {$\mathbb{R}^{K}$} (posterior);
-	\end{tikzpicture}%
-	}
-	\caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\Phi$.}
-	\label{fig:arch}
+        % --- BACKGROUND CONTAINERS ---
+        \begin{scope}[on background layer]
+            \node[draw=blue!40, dashed, rounded corners=6pt, fill=blue!4, fill opacity=0.3, inner sep=12pt, rounded corners=6pt, fit=(frames) (cnn), label={[blue!70!black]above:\textbf{System 1: Neural perception}}] (bg_sys1) {};
+            \node[draw=orange!40, dashed, rounded corners=6pt, fill=orange!4, fill opacity=0.3, inner sep=12pt, rounded corners=6pt, fit=(outer) (mask), label={[orange!70!black]above:\textbf{System 2: Symbolic constraints}}] (bg_sys2) {};
+        \end{scope}
+
+        % --- STREAMLINED ROUTING ARROWS (No Intersections or Box Merging) ---
+        \draw[arrow] (frames) -- (cnn);
+        \draw[arrow] (cnn.east) -- node[above, font=\scriptsize, pos=0.3] {$\mathbf{p}_{\text{cam}}$} ($(outer.west)+(0,0.35)$);
+        \draw[arrow] (speed.east) -- node[above, font=\scriptsize, pos=0.5] {$\mathbf{p}_{\text{speed}}$} ($(outer.west)+(0,0.0)$);
+        \draw[arrow] (odo.east) -- node[below, font=\scriptsize, pos=0.5] {$\mathbf{p}_{\text{odo}}$} ($(outer.west)+(0,-0.35)$);
+        \draw[arrow] (outer) -- node[above, font=\scriptsize] {$\mathbb{R}^{K \times K \times K}$} (mask);
+        \draw[arrow] (mask) -- node[above, font=\scriptsize] {$\mathbb{R}^{K}$} (posterior);
+    \end{tikzpicture}%
+    }
+    \caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\Phi$.}
+    \label{fig:arch}
 \end{figure}
 
 \subsection{Training objective}
