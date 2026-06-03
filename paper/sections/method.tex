@@ -14,18 +14,25 @@ Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair
 
 \begin{figure}[t]
 	\centering
-	\begin{tikzpicture}[node distance=8mm, auto,>=latex']
-		\node[draw, rectangle, rounded corners] (in) {Temporal frames $[I_t,I_{t+1}]$};
-		\node[draw, rectangle, rounded corners, right=of in] (per) {Perception CNN $\mathcal{P}_\theta$\\$p_{cam}\in\Delta^{K-1}$};
-		\node[draw, rectangle, rounded corners, below=of per] (odo) {Odometer $p_{odo}$};
-		\node[draw, rectangle, rounded corners, right=of per] (outer) {Outer product\\$J_{i,j,k}=p_{cam,i}p_{odo,j}p_{speed,k}$};
-		\node[draw, rectangle, rounded corners, right=of outer] (phi) {Symbolic masks $\\Phi$\\(kinematic rules)};
-		\node[draw, rectangle, rounded corners, right=of phi] (out) {Isolated posterior\\$p_{state}$};
+	\begin{tikzpicture}[
+		auto,
+		>=Latex,
+		node distance=14mm and 18mm,
+		font=\small,
+		every node/.style={align=center}
+	]
+		\node[draw, rounded corners, text width=3.0cm, minimum height=1.1cm] (in) {Temporal frames\\$[I_t, I_{t+1}]$};
+		\node[draw, rounded corners, text width=3.4cm, right=of in, minimum height=1.3cm] (per) {Perception CNN\\$\mathcal{P}_\theta$\\$p_{cam}\in\Delta^{K-1}$};
+		\node[draw, rounded corners, text width=3.7cm, right=of per, minimum height=1.4cm] (outer) {Outer product\\$J_{i,j,k}=p_{cam,i}p_{odo,j}p_{speed,k}$};
+		\node[draw, rounded corners, text width=3.2cm, right=of outer, minimum height=1.4cm] (phi) {Symbolic masks\\$\Phi$\\kinematic rules};
+		\node[draw, rounded corners, text width=3.0cm, right=of phi, minimum height=1.2cm] (out) {Isolated posterior\\$p_{state}$};
+
+		\node[draw, rounded corners, text width=3.0cm, below=of per, yshift=-2mm, minimum height=0.95cm] (odo) {Odometer\\$p_{odo}$};
+		\node[draw, rounded corners, text width=3.0cm, below=of in, yshift=-2mm, minimum height=0.95cm] (speed) {Speed prior\\$p_{speed}$};
 
 		\draw[->] (in) -- (per);
 		\draw[->] (per) -- (outer);
 		\draw[->] (odo) -- (outer);
-		\node[draw=none, below=of in, yshift=4mm] (speed) {Speed prior $p_{speed}$};
 		\draw[->] (speed) -- (outer);
 		\draw[->] (outer) -- (phi);
 		\draw[->] (phi) -- (out);
