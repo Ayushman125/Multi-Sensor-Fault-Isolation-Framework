@@ -62,7 +62,7 @@ Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair
     }
     \caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\Phi$.}
     \label{fig:arch}
-\end{figure}
+\end{figure*} %
 
 \subsection{Training objective}
 We train $\mathcal{P}_\theta$ with a standard cross-entropy objective against discretized ground-truth speed buckets, while keeping the symbolic masks deterministic and non-trainable. This preserves end-to-end differentiability for the perception network while guaranteeing the invariants encoded by $\Phi$.
