@@ -5,12 +5,15 @@ We consider temporal pairs of sensor observations $(I_t, I_{t+1})$ together with
 The perception module $\mathcal{P}_\theta$ is a convolutional neural network that maps a stacked 6-channel temporal tensor $X_t = [I_t, I_{t+1}]$ to a categorical probability vector over speed buckets: $p_{cam}=\mathcal{P}_\theta(X_t)\in\Delta^{K-1}$.
 
 \subsection{Differentiable symbolic voting (System 2)}
-We compute a joint voting tensor via an Einstein-summation outer product between independent modality distributions (camera, odometer, speed prior):
-$$\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\; \mathbf{p}_{\text{odo},j}\; \mathbf{p}_{\text{speed},k}$$
+We compute a joint voting tensor via an Einstein-summation outer product between independent modality distributions (camera, odometer, speed prior). Let $\mathbf{p}_{\text{cam}} \in \Delta^{K-1}$, $\mathbf{p}_{\text{odo}} \in \Delta^{K-1}$, and $\mathbf{p}_{\text{speed}} \in \Delta^{K-1}$ denote the categorical probability distributions from each sensor modality. The joint tensor is defined as:
+\begin{equation}
+\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i} \cdot \mathbf{p}_{\text{odo},j} \cdot \mathbf{p}_{\text{speed},k}, \quad i,j,k \in \{1, \ldots, K\}
+\label{eq:tensor}
+\end{equation}
 The isolator evaluates deterministic logical rules over indices of $\mathbf{M}$ (for example, consistency rules that select compatible triples) and reduces $\mathbf{M}$ to an isolated posterior over states. In practice the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\Phi$ that enforce kinematic feasibility.
 
 \subsection{Architecture schematic}
-Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor; deterministic masks $\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
+Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor (Eq.~\ref{eq:tensor}); deterministic masks $\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
 
 \begin{figure*}[!t]
     \centering
