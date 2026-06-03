@@ -10,7 +10,7 @@ We compute a joint voting tensor via an Einstein-summation outer product between
 \mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i} \cdot \mathbf{p}_{\text{odo},j} \cdot \mathbf{p}_{\text{speed},k}, \quad i,j,k \in \{1, \ldots, K\}
 \label{eq:tensor}
 \end{equation}
-The isolator evaluates deterministic logical rules over indices of $\mathbf{M}$ (for example, consistency rules that select compatible triples) and reduces $\mathbf{M}$ to an isolated posterior over states. In practice the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\Phi$ that enforce kinematic feasibility.
+The isolator evaluates deterministic logical rules over indices of $\mathbf{M}$ (for example, consistency rules that select compatible triples) and reduces $\mathbf{M}$ to an isolated posterior over states. In practice, the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\Phi$ that enforce kinematic feasibility.
 
 \subsection{Architecture schematic}
 Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor (Eq.~\ref{eq:tensor}); deterministic masks $\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
@@ -30,31 +30,31 @@ Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair
         output/.style={base, fill=green!6, draw=green!50!black, text width=2.4cm},
         arrow/.style={->, thick, draw=gray!70!black}
     ]
-        % --- STAGE 1: VISUALLY BALANCED SENSOR COLUMN ---
+        % Stage 1: Left Input Column
         \node[sensor] (frames) {6-channel temporal stack\\$[I_t, I_{t+1}]$};
         \node[sensor, below=of frames] (speed) {Speed prior\\$\mathbf{p}_{\text{speed}}$};
         \node[sensor, below=of speed] (odo) {Odometer\\$\mathbf{p}_{\text{odo}}$};
 
-        % --- STAGE 2: SYSTEM 1 PERCEPTION ---
+        % Stage 2: System 1 Perception
         \node[neural, right=of frames] (cnn) {Perception CNN\\$\mathcal{P}_\theta$\\$\mathbf{p}_{\text{cam}} \in \Delta^{K-1}$};
 
-        % --- STAGE 3: SYSTEM 2 TENSOR FUSION (Symmetrically Positioned at Center-Stream Height) ---
+        % Stage 3: System 2 Deterministic Outer Product
         \node[symbolic, right=1.6cm of cnn.south east, yshift=-0.55cm, anchor=west] (outer) {
             Tensor outer product\\
             $\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\,\mathbf{p}_{\text{odo},j}\,\mathbf{p}_{\text{speed},k}$
         };
         \node[symbolic, right=of outer] (mask) {Symbolic mask ($\Phi$)\\Kinematic rules};
         
-        % --- STAGE 4: EVALUATED POSTERIOR OUTPUT ---
+        % Stage 4: Safety Action Evaluation
         \node[output, right=of mask] (posterior) {Posterior\\$\mathbf{P}(V=m)$};
 
-        % --- BACKGROUND CONTAINERS ---
+        % Decorative Containment Blocks
         \begin{scope}[on background layer]
-            \node[draw=blue!40, dashed, rounded corners=6pt, fill=blue!4, fill opacity=0.3, inner sep=12pt, rounded corners=6pt, fit=(frames) (cnn), label={[blue!70!black]above:\textbf{System 1: Neural perception}}] (bg_sys1) {};
-            \node[draw=orange!40, dashed, rounded corners=6pt, fill=orange!4, fill opacity=0.3, inner sep=12pt, rounded corners=6pt, fit=(outer) (mask), label={[orange!70!black]above:\textbf{System 2: Symbolic constraints}}] (bg_sys2) {};
+            \node[draw=blue!40, dashed, rounded corners=6pt, fill=blue!4, fill opacity=0.3, inner sep=12pt, fit=(frames) (cnn), label={[blue!70!black]above:\textbf{System 1: Neural perception}}] (bg_sys1) {};
+            \node[draw=orange!40, dashed, rounded corners=6pt, fill=orange!4, fill opacity=0.3, inner sep=12pt, fit=(outer) (mask), label={[orange!70!black]above:\textbf{System 2: Symbolic constraints}}] (bg_sys2) {};
         \end{scope}
 
-        % --- STREAMLINED ROUTING ARROWS (No Intersections or Box Merging) ---
+        % Alignment Arrow Matrix Routing
         \draw[arrow] (frames) -- (cnn);
         \draw[arrow] (cnn.east) -- node[above, font=\scriptsize, pos=0.3] {$\mathbf{p}_{\text{cam}}$} ($(outer.west)+(0,0.35)$);
         \draw[arrow] (speed.east) -- node[above, font=\scriptsize, pos=0.5] {$\mathbf{p}_{\text{speed}}$} ($(outer.west)+(0,0.0)$);
@@ -63,9 +63,9 @@ Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair
         \draw[arrow] (mask) -- node[above, font=\scriptsize] {$\mathbb{R}^{K}$} (posterior);
     \end{tikzpicture}%
     }
-    \caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\Phi$.}
+    \caption{The optimized temporal neuro-symbolic execution pipeline. By decoupling the spatial positions of the raw sensor feeds from the neural processing block, data vector arrays route straight into the tensor outer product without overlapping or visual interference. System 1 processes high-dimensional pixel sequences; System 2 enforces deterministic kinematic safety constraints.}
     \label{fig:arch}
-\end{figure*} %
+\end{figure*}
 
 \subsection{Training objective}
 We train $\mathcal{P}_\theta$ with a standard cross-entropy objective against discretized ground-truth speed buckets, while keeping the symbolic masks deterministic and non-trainable. This preserves end-to-end differentiability for the perception network while guaranteeing the invariants encoded by $\Phi$.
