@@ -1,0 +1,13 @@
+\subsection{Problem setup}
+We consider temporal pairs of sensor observations $(I_t, I_{t+1})$ together with auxiliary odometry readings. Our goal is to estimate a discretized forward motion state $s\in\{1,\dots,K\}$ robustly when one or more sensor streams are corrupted.
+
+\subsection{Perception (System 1)}
+The perception module $\mathcal{P}_\theta$ is a convolutional neural network that maps a stacked 6-channel temporal tensor $X_t = [I_t, I_{t+1}]$ to a categorical probability vector over speed buckets: $p_{cam}=\mathcal{P}_\theta(X_t)\in\Delta^{K-1}$.
+
+\subsection{Differentiable symbolic voting (System 2)}
+We compute a joint voting tensor via an Einstein summation outer product between independent modality distributions (camera, odometer, speed prior):
+$$J_{i,j,k} = p_{cam,i}\; p_{odo,j}\; p_{speed,k}$$
+The isolator evaluates deterministic logical rules over indices of $J$ (for example, consistency rules that select compatible triples) and reduces $J$ to an isolated posterior over states. In practice the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\\Phi$ that enforce kinematic feasibility.
+
+\subsection{Training objective}
+We train $\mathcal{P}_\theta$ with a standard cross-entropy objective against discretized ground-truth speed buckets, while keeping the symbolic masks deterministic and non-trainable. This preserves end-to-end differentiability for the perception network while guaranteeing the invariants encoded by $\Phi$.

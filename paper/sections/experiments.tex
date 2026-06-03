@@ -1,0 +1,8 @@
+\subsection{Dataset and preprocessing}
+We derive temporal paired samples from KITTI training sequences following standard image preprocessing (resize, center-crop, normalization). Ground-truth forward displacement is computed from the KITTI odometry/location fields and discretized into $K$ buckets \cite{geiger2012kitti}.
+
+\subsection{Evaluation scenarios}
+We evaluate three scenarios: (1) nominal clean inputs; (2) camera-blind (camera input replaced by blurred/occluded images); (3) camera-blind + broken odometer (both visual and odometry channels corrupted). For each scenario we measure classification accuracy over speed buckets and a task-level ``system integrity'' metric that counts how often the isolator selects a safe navigation action.
+
+\subsection{Implementation details}
+Perception networks were implemented in PyTorch, trained on an NVIDIA GPU. We report hyperparameters, training schedules, and exact preprocessing in the supplementary material.

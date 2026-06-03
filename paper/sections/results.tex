@@ -1,0 +1,23 @@
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.8\linewidth]{../kitti_realworld_fault_isolation.png}
+  \caption{Validation integrity under nominal and corrupted scenarios (figure produced by the accompanying code).}
+  \label{fig:results}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Scenario & Accuracy (\%) & System Integrity (\%) \\
+    \midrule
+    Nominal & 99.33 & 99.33 \\
+    Camera-blind & 98.93 & 98.93 \\
+    Camera-blind + Odometer & 98.60 & 98.60 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Representative validation numbers from the temporal pipeline.}
+  \label{tab:metrics}
+\end{table}
+
+We observe that embedding deterministic kinematic constraints yields graceful degradation compared to an unconstrained baseline (see supplementary). All numbers reported are produced by the accompanying notebook and code in the repository.
