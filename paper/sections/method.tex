@@ -5,39 +5,51 @@ We consider temporal pairs of sensor observations $(I_t, I_{t+1})$ together with
 The perception module $\mathcal{P}_\theta$ is a convolutional neural network that maps a stacked 6-channel temporal tensor $X_t = [I_t, I_{t+1}]$ to a categorical probability vector over speed buckets: $p_{cam}=\mathcal{P}_\theta(X_t)\in\Delta^{K-1}$.
 
 \subsection{Differentiable symbolic voting (System 2)}
-We compute a joint voting tensor via an Einstein summation outer product between independent modality distributions (camera, odometer, speed prior):
-$$J_{i,j,k} = p_{cam,i}\; p_{odo,j}\; p_{speed,k}$$
-The isolator evaluates deterministic logical rules over indices of $J$ (for example, consistency rules that select compatible triples) and reduces $J$ to an isolated posterior over states. In practice the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\\Phi$ that enforce kinematic feasibility.
+We compute a joint voting tensor via an Einstein-summation outer product between independent modality distributions (camera, odometer, speed prior):
+$$\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\; \mathbf{p}_{\text{odo},j}\; \mathbf{p}_{\text{speed},k}$$
+The isolator evaluates deterministic logical rules over indices of $\mathbf{M}$ (for example, consistency rules that select compatible triples) and reduces $\mathbf{M}$ to an isolated posterior over states. In practice the reduction is implemented as a weighted sum and a small, fixed set of logical masks $\Phi$ that enforce kinematic feasibility.
 
 \subsection{Architecture schematic}
-Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor; deterministic masks $\\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
+Figure~\ref{fig:arch} depicts the high-level architecture: a temporal image pair enters the perception CNN (System 1) producing a discrete probability vector; auxiliary odometry and a speed prior produce additional categorical distributions; an Einstein-summation outer product forms a joint tensor; deterministic masks $\Phi$ prune inconsistent combinations and produce the final posterior over motion states.
 
-\begin{figure}[t]
+\begin{figure}[!t]
 	\centering
+	\resizebox{0.98\linewidth}{!}{%
 	\begin{tikzpicture}[
-		auto,
-		>=Latex,
-		node distance=14mm and 18mm,
 		font=\small,
-		every node/.style={align=center}
+		>=Latex,
+		node distance=10mm and 14mm,
+		every node/.style={align=center},
+		base/.style={draw, thick, rounded corners=4pt, minimum height=1.0cm, text width=3.0cm, inner sep=5pt},
+		sensor/.style={base, fill=gray!10, draw=gray!55!black},
+		neural/.style={base, fill=blue!8, draw=blue!55!black, text width=3.4cm},
+		symbolic/.style={base, fill=orange!10, draw=orange!65!black, text width=3.5cm},
+		output/.style={base, fill=green!10, draw=green!50!black, text width=2.7cm},
+		arrow/.style={->, thick, draw=gray!70!black}
 	]
-		\node[draw, rounded corners, text width=3.0cm, minimum height=1.1cm] (in) {Temporal frames\\$[I_t, I_{t+1}]$};
-		\node[draw, rounded corners, text width=3.4cm, right=of in, minimum height=1.3cm] (per) {Perception CNN\\$\mathcal{P}_\theta$\\$p_{cam}\in\Delta^{K-1}$};
-		\node[draw, rounded corners, text width=3.7cm, right=of per, minimum height=1.4cm] (outer) {Outer product\\$J_{i,j,k}=p_{cam,i}p_{odo,j}p_{speed,k}$};
-		\node[draw, rounded corners, text width=3.2cm, right=of outer, minimum height=1.4cm] (phi) {Symbolic masks\\$\Phi$\\kinematic rules};
-		\node[draw, rounded corners, text width=3.0cm, right=of phi, minimum height=1.2cm] (out) {Isolated posterior\\$p_{state}$};
+		\node[sensor] (frames) {6-channel temporal stack\\$[I_t, I_{t+1}]$};
+		\node[sensor, below=of frames] (speed) {Speed prior\\$\mathbf{p}_{\text{speed}}$};
+		\node[sensor, below=of speed] (odo) {Odometer\\$\mathbf{p}_{\text{odo}}$};
 
-		\node[draw, rounded corners, text width=3.0cm, below=of per, yshift=-2mm, minimum height=0.95cm] (odo) {Odometer\\$p_{odo}$};
-		\node[draw, rounded corners, text width=3.0cm, below=of in, yshift=-2mm, minimum height=0.95cm] (speed) {Speed prior\\$p_{speed}$};
+		\node[neural, right=of frames] (cnn) {Perception CNN\\$\mathcal{P}_\theta$\\$\mathbf{p}_{\text{cam}} \in \Delta^{K-1}$};
+		\node[symbolic, right=of cnn] (outer) {Tensor outer product\\$\mathbf{M}_{i,j,k} = \mathbf{p}_{\text{cam},i}\,\mathbf{p}_{\text{odo},j}\,\mathbf{p}_{\text{speed},k}$};
+		\node[symbolic, right=of outer] (mask) {Symbolic mask ($\Phi$)\\Kinematic rules};
+		\node[output, right=of mask] (posterior) {Posterior\\$\mathbf{P}(V=m)$};
 
-		\draw[->] (in) -- (per);
-		\draw[->] (per) -- (outer);
-		\draw[->] (odo) -- (outer);
-		\draw[->] (speed) -- (outer);
-		\draw[->] (outer) -- (phi);
-		\draw[->] (phi) -- (out);
-	\end{tikzpicture}
-	\caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\\Phi$.}
+		\begin{scope}[on background layer]
+			\node[draw=blue!40, dashed, rounded corners=6pt, fill=blue!4, inner sep=10pt, fit=(frames) (cnn), label={[blue!70!black]above:\textbf{System 1: Neural perception}}] {};
+			\node[draw=orange!40, dashed, rounded corners=6pt, fill=orange!4, inner sep=10pt, fit=(outer) (mask), label={[orange!70!black]above:\textbf{System 2: Symbolic constraints}}] {};
+		\end{scope}
+
+		\draw[arrow] (frames) -- (cnn);
+		\draw[arrow] (speed.east) -- node[above, font=\scriptsize] {$\mathbf{p}_{\text{speed}}$} ($(outer.west)+(0,0.25)$);
+		\draw[arrow] (odo.east) -- node[below, font=\scriptsize] {$\mathbf{p}_{\text{odo}}$} ($(outer.west)+(0,-0.25)$);
+		\draw[arrow] (cnn) -- node[above, font=\scriptsize] {$\mathbf{p}_{\text{cam}}$} (outer);
+		\draw[arrow] (outer) -- node[above, font=\scriptsize] {$\mathbb{R}^{K \times K \times K}$} (mask);
+		\draw[arrow] (mask) -- node[above, font=\scriptsize] {$\mathbb{R}^{K}$} (posterior);
+	\end{tikzpicture}%
+	}
+	\caption{High-level architecture: System 1 perception feeds a differentiable symbolic voting layer implemented as an outer product and masked by deterministic kinematic rules $\Phi$.}
 	\label{fig:arch}
 \end{figure}
 
